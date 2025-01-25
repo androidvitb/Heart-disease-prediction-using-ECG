@@ -4,4 +4,4 @@ The "Cardiovascular ECG Images" dataset on Kaggle comprises electrocardiogram (E
 The entire dataset is available at https://www.kaggle.com/datasets/jayaprakashpondy/ecgimages/code
 
 
-Also the dataset is attached at ->
+Also the dataset is attached at ->https://huggingface.co/datasets/sagar27kumar/ECG-XRAY-dataset
