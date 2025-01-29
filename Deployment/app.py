@@ -16,21 +16,25 @@ def preprocess_image(image, new_width, new_height):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-
-
-
-def loading_model():
-    zip_file_path =  'best_model.zip'
+def ModelExtract():
+    zip_file_path =  'quantized_model.zip'
     extract_folder = 'Model/'
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(extract_folder)
-    model = tf.keras.models.load_model('Model/best_model.keras')
-    return model
 
-# Function to get prediction from the model
-def predict(model, img_array):
-    predictions = model.predict(img_array)
+
+
+def predict(img_array):
+    ModelExtract()
+    interpreter = tf.lite.Interpreter(model_path='Model/quantized_model.tflite')
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    interpreter.set_tensor(input_details[0]['index'], img_array.astype(np.float32))
+    interpreter.invoke()
+    predictions = interpreter.get_tensor(output_details[0]['index'])
     return predictions
+
 
 # Function to display the prediction result
 def display_prediction(predictions):
@@ -90,8 +94,7 @@ if uploaded_file is not None:
     if st.button("Analyze ECG"):
         image = Image.open(uploaded_file)
         img_array = preprocess_image(image,960,540)
-        model = loading_model()
-        predictions = predict(model, img_array)
+        predictions = predict(img_array)
         display_prediction(predictions)
 else:
     st.markdown("### Please upload an ECG image to get started.")
