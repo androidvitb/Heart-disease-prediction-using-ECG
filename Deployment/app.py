@@ -7,6 +7,8 @@ import zipfile
 
 
 
+
+
 # Function to preprocess image: resizing and blurring
 def preprocess_image(image, new_width, new_height):
     image_arr=np.array(image)
@@ -23,11 +25,16 @@ def ModelExtract():
         zip_ref.extractall(extract_folder)
 
 
-
-def predict(img_array):
-    ModelExtract()
-    interpreter = tf.lite.Interpreter(model_path='Model/quantized_model.tflite')
+@st.cache_resource
+def load_model():
+    ModelExtract()  # Extract once
+    interpreter = tf.lite.Interpreter(model_path="Model/quantized_model.tflite")
     interpreter.allocate_tensors()
+    return interpreter
+
+interpreter = load_model()
+
+def predict(img_array, interpreter):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
     interpreter.set_tensor(input_details[0]['index'], img_array.astype(np.float32))
@@ -46,6 +53,7 @@ def display_prediction(predictions):
 
 # Set up the Streamlit page
 st.set_page_config(page_title="ECG Heart Condition Classification", page_icon="❤️")
+
 
 # Title and description
 st.title("ECG Heart Condition Classification")
@@ -92,16 +100,13 @@ st.markdown(
 if uploaded_file is not None:
     st.image(uploaded_file, caption="Uploaded ECG Image", use_container_width=True)
     if st.button("Analyze ECG"):
-        image = Image.open(uploaded_file)
-        img_array = preprocess_image(image,960,540)
-        predictions = predict(img_array)
-        display_prediction(predictions)
+        try:
+            image = Image.open(uploaded_file)
+            img_array = preprocess_image(image,960,540)
+            predictions = predict(img_array, interpreter)
+            display_prediction(predictions)
+        except Exception as e:
+            st.error(f"Error processing image: {str(e)}")
+            st.stop()
 else:
     st.markdown("### Please upload an ECG image to get started.")
-
-
-
-
-
-
-
